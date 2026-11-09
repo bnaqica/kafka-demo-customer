@@ -1,0 +1,11 @@
+# Added on top of src/main/resources/application.yml for tests. The issuer and the broker are never contacted.
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9999/test-issuer

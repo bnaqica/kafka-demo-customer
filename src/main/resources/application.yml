@@ -1,0 +1,55 @@
+# Defaults for every environment. Values come from environment variables so the
+# same image runs anywhere; the `local` profile fills them in for local-docker.
+server:
+  port: 8081
+
+spring:
+  application:
+    name: kafka-demo-customer
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema
+    properties:
+      hibernate:
+        default_schema: kafka_demo_customer
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    default-schema: kafka_demo_customer   # never the public schema
+    schemas: kafka_demo_customer,audit
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI}
+
+app:
+  kafka:
+    topics:
+      customer-events: customer-events
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# API docs are only switched on by the `local` profile
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

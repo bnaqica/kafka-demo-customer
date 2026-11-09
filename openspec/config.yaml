@@ -1,0 +1,52 @@
+schema: spec-driven
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
+
+context: |
+  Part of the Kafka Demo system: kafka-demo-customer, kafka-demo-email, kafka-demo-analytics, kafka-demo-ui.
+  Kafka event contracts are shared across repos (docs/kafka-events.md); a change that touches an event
+  must list the impact on every consuming repo.
+  Schema changes are new Flyway migrations only; never edit an applied migration.
+  Claude never commits; tasks end with changes left in the working tree for developer review.
+
+rules:
+  tasks:
+    - Include a task to add or update tests for every behaviour change
+    - Include a task to update docs/ and README.md when behaviour, config or contracts change
+
+# How /opsx:apply does its work. .claude/rules/development-workflow.md has the full workflow.
+operations:
+  apply:
+    guidance:
+      - For every task, invoke the superpowers:test-driven-development skill before writing code, and write the failing test first.
+      - Skip any commit step in that skill, and never delete existing code to satisfy it. Nothing is committed, so deleted work can't be recovered.
+      - When all tasks are complete, invoke the superpowers:requesting-code-review skill, following the code review section of .claude/rules/development-workflow.md.
