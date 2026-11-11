@@ -30,16 +30,18 @@ spring:
       acks: all
       properties:
         enable.idempotence: true
+        max.block.ms: 3000   # a write must not hang on a broker that is down
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${JWT_ISSUER_URI}
+          audiences: kafka-demo-api
 
 app:
   kafka:
     topics:
-      customer-events: customer-events
+      customer-change-event: customer-change-event
 
 management:
   endpoints:

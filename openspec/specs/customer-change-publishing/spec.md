@@ -13,9 +13,20 @@ Each API call that changes a customer or phone SHALL publish exactly one event t
 - **WHEN** a customer or phone PUT supplies the values already stored
 - **THEN** the API responds 200 and no event is published
 
+#### Scenario: PUT differing only in whitespace or email case
+- **WHEN** a customer PUT differs from the stored customer only by surrounding whitespace or the case of the email
+- **THEN** the API responds 200 and no event is published
+
 #### Scenario: Failed request
 - **WHEN** a request fails validation or conflicts
 - **THEN** no event is published
+
+### Requirement: Publishing failure does not fail the request
+If publishing fails after the database commit, the change SHALL be kept, the API SHALL respond as if publishing succeeded, and the failure SHALL be logged. The event SHALL NOT be retried, so each change publishes at most one event.
+
+#### Scenario: Kafka unavailable
+- **WHEN** a customer is created while Kafka cannot be reached
+- **THEN** the API responds 201, the customer is stored and the failure is logged
 
 ### Requirement: Event type by change
 POST customer SHALL publish `customer-addition` and DELETE customer `customer-delete`, regardless of phones. The phones API SHALL publish `customer-phone-add`, `customer-phone-change` or `customer-phone-delete`.
@@ -67,12 +78,23 @@ Every event SHALL carry `eventId`, `eventType`, `occurredAt`, `customerId`, `fir
 - **THEN** the event's `email` is the new address
 
 ### Requirement: Changes by type
-`changes` SHALL be empty for `customer-addition` and `customer-delete`, hold `fields` for `customer-change`, `address` for `customer-address-change`, `phone` for phone add and delete, and `previousPhone` and `phone` for phone change.
+`changes` SHALL be empty for `customer-addition` and `customer-delete`, hold `fields` for `customer-change`, `address` for `customer-address-change`, `phone` for phone add and delete, and `previousPhone` and `phone` for phone change. Parts that do not apply SHALL be left out of the JSON, so `customer-addition` and `customer-delete` carry `"changes": {}`.
 
 #### Scenario: Phone change detail
 - **WHEN** a phone's number is changed
 - **THEN** the event's `changes` holds the previous and new phone
 
+#### Scenario: Addition has no change detail
+- **WHEN** a `customer-addition` event is published
+- **THEN** its `changes` is an empty object
+
+### Requirement: Change detail format
+`changes.fields` SHALL list, in this order, those of `firstName`, `middleName`, `lastName`, `dateOfBirth`, `gender`, `email`, `address` and `phones` that changed. `changes.address` SHALL be the address after the change, with `street`, `apartment`, `city`, `state` and `zip`. A phone SHALL be given as its `type` and `number`.
+
 #### Scenario: Fields listed
-- **WHEN** a `customer-change` event is published for name and address changes
-- **THEN** `changes.fields` lists those areas
+- **WHEN** a PUT changes the last name and the address
+- **THEN** `changes.fields` is `["lastName", "address"]`
+
+#### Scenario: Address change detail
+- **WHEN** a `customer-address-change` event is published
+- **THEN** `changes.address` holds the new address and no other part of `changes` is present

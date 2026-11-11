@@ -12,6 +12,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -29,6 +30,7 @@ public class ApiAuditFilter extends OncePerRequestFilter {
 
     private static final Set<String> AUDITED_METHODS = Set.of("POST", "PUT", "DELETE");
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final int MAX_PATH_LENGTH = 2048; // api_audit.api_path
     private static final String ANONYMOUS = "anonymous";
     private static final int MAX_PAYLOAD_BYTES = 1_048_576;
 
@@ -57,7 +59,7 @@ public class ApiAuditFilter extends OncePerRequestFilter {
         try {
             int status = threw ? HttpServletResponse.SC_INTERNAL_SERVER_ERROR : response.getStatus();
             auditService.record(ApiAuditEntry.builder()
-                    .apiPath(request.getRequestURI())
+                    .apiPath(truncate(request.getRequestURI()))
                     .action(request.getMethod())
                     .requestPayload(payload(request))
                     .performedBy(performedBy(request))
@@ -80,13 +82,22 @@ public class ApiAuditFilter extends OncePerRequestFilter {
 
     private String performedBy(HttpServletRequest request) {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.startsWith(BEARER_PREFIX)) {
+        if (header == null || !header.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
             return ANONYMOUS;
         }
         try {
-            return jwtDecoder.decode(header.substring(BEARER_PREFIX.length())).getClaimAsString("preferred_username");
+            Jwt jwt = jwtDecoder.decode(header.substring(BEARER_PREFIX.length()));
+            String username = jwt.getClaimAsString("preferred_username");
+            if (username != null) {
+                return username;
+            }
+            return jwt.getSubject() != null ? jwt.getSubject() : ANONYMOUS;
         } catch (RuntimeException ex) {
             return ANONYMOUS; // invalid or expired token, or the issuer can't be reached
         }
+    }
+
+    private static String truncate(String path) {
+        return path.length() <= MAX_PATH_LENGTH ? path : path.substring(0, MAX_PATH_LENGTH);
     }
 }

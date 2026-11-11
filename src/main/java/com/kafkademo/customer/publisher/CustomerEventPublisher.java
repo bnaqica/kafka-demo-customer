@@ -1,8 +1,9 @@
 package com.kafkademo.customer.publisher;
 
 import com.kafkademo.customer.config.KafkaTopicsProperties;
-import com.kafkademo.customer.dto.event.CustomerCreatedEvent;
-import com.kafkademo.customer.entity.Customer;
+import com.kafkademo.customer.dto.CustomerChange;
+import com.kafkademo.customer.dto.event.CustomerChangeEvent;
+import com.kafkademo.customer.dto.response.CustomerResponse;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,26 +25,36 @@ public class CustomerEventPublisher {
     private final KafkaTopicsProperties topics;
     private final Clock clock;
 
-    public void publishCustomerCreated(Customer customer) {
-        CustomerCreatedEvent event = new CustomerCreatedEvent(
+    /** Publishes after the current transaction commits, so consumers never see a change that was rolled back. */
+    public void publish(CustomerChange change, CustomerResponse customer) {
+        CustomerChangeEvent event = new CustomerChangeEvent(
                 UUID.randomUUID(),
-                CustomerCreatedEvent.TYPE,
+                change.type(),
                 Instant.now(clock),
-                customer.getId(),
-                customer.getFirstName(),
-                customer.getLastName(),
-                customer.getEmail());
+                customer.id(),
+                customer.firstName(),
+                customer.lastName(),
+                customer.email(),
+                customer.address().state(),
+                change.changes());
         String payload = jsonMapper.writeValueAsString(event);
-        String key = customer.getId().toString();
+        String key = customer.id().toString();
+        String wireName = change.type().getWireName();
 
-        Runnable send =
-                () -> kafkaTemplate.send(topics.customerEvents(), key, payload).whenComplete((result, ex) -> {
+        Runnable send = () -> {
+            // The change has already committed, so a publishing failure must not fail the request
+            try {
+                kafkaTemplate.send(topics.customerChangeEvent(), key, payload).whenComplete((result, ex) -> {
                     if (ex != null) {
-                        log.error("Failed to publish {} for customer {}", event.eventType(), key, ex);
+                        log.error("Failed to publish {} for customer {}", wireName, key, ex);
                     } else {
-                        log.info("Published {} for customer {} to {}", event.eventType(), key, topics.customerEvents());
+                        log.info("Published {} for customer {}", wireName, key);
                     }
                 });
+            } catch (RuntimeException ex) {
+                log.error("Failed to publish {} for customer {}", wireName, key, ex);
+            }
+        };
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

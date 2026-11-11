@@ -37,7 +37,7 @@ implementation, so controllers receive DTOs and never see an entity. Don't add m
 ## Security
 
 Every API call requires a Keycloak bearer token; the service is an OAuth2 resource server that validates it.
-Only the health check is open, and only the `local` profile may turn authentication off, for development without Keycloak.
+Only the health check is open. In this repo the `local` profile requires tokens too, so Keycloak roles can be demonstrated; it only opens the Swagger pages.
 
 ## PostgreSQL schemas and audit
 

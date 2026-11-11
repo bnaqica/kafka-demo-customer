@@ -17,6 +17,17 @@ A customer SHALL have `firstName`, `lastName`, `dateOfBirth`, `gender`, `email` 
 - **WHEN** a create or update request omits `dateOfBirth`
 - **THEN** the API responds 400 and nothing is stored
 
+### Requirement: Normalized values
+Before a customer or phone is stored or compared, the service SHALL trim surrounding whitespace from text fields, store `email` in lowercase, and store a blank `middleName` or `address.apartment` as absent.
+
+#### Scenario: Email stored in lowercase
+- **WHEN** a customer is created with email ` Ada@Example.COM `
+- **THEN** the stored and returned email is `ada@example.com`
+
+#### Scenario: Blank middle name
+- **WHEN** a customer is created with `middleName` set to spaces only
+- **THEN** the customer is returned without a `middleName`
+
 ### Requirement: Field validation
 The API SHALL reject with 400 a `gender` other than `MALE`, `FEMALE`, `NON_BINARY` or `PREFER_NOT_TO_SAY`, a `state` that is not two uppercase letters, a `zip` that is not 5 digits or ZIP+4, a `dateOfBirth` not in the past, and an invalid email.
 

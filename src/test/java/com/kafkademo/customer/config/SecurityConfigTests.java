@@ -37,6 +37,11 @@ class SecurityConfigTests {
     }
 
     @Test
+    void swaggerNeedsATokenOutsideTheLocalProfile() throws Exception {
+        mockMvc.perform(get("/swagger-ui.html")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void healthCheckIsPublic() throws Exception {
         mockMvc.perform(get("/actuator/health")).andExpect(status().isNotFound());
     }

@@ -1,5 +1,7 @@
-# Turns off authentication. Points at the stacks in the local-docker repo (postgres/ and kafka/).
+# Points at the stacks in the local-docker repo (postgres/, kafka/ and keycloak/). Requires tokens like every profile.
 spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed   # sample customers, local only
   datasource:
     url: jdbc:postgresql://localhost:5432/kafka_demo_customer_db
     username: kafka_demo_customer_local
@@ -10,7 +12,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/kafka-demo   # the local-docker Keycloak; authentication is off in this profile
+          issuer-uri: http://localhost:8180/realms/kafka-demo   # the local-docker Keycloak
 springdoc:
   api-docs:
     enabled: true

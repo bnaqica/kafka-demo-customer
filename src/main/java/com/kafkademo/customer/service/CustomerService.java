@@ -5,6 +5,7 @@ import com.kafkademo.customer.dto.response.CustomerResponse;
 import java.util.List;
 import java.util.UUID;
 
+/** CRUD for the customer table. Phones are read through {@link CustomerPhoneService} and written by the caller. */
 public interface CustomerService {
 
     CustomerResponse create(CustomerRequest request);

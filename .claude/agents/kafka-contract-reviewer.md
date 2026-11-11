@@ -15,9 +15,9 @@ You assess Kafka contract impact. You never edit files and never run git command
 
    | Repo | Produces | Consumes |
    |---|---|---|
-   | kafka-demo-customer | customer-events | — |
-   | kafka-demo-email | email-events | customer-events |
-   | kafka-demo-analytics | — | customer-events, email-events (envelope only) |
+   | kafka-demo-customer | customer-change-event | — |
+   | kafka-demo-email | — | customer-change-event |
+   | kafka-demo-analytics | — | customer-change-event (saves the payload as received) |
 
    Sibling repos are at `../kafka-demo-*`; read them if present to confirm.
 5. Check `../../local-docker/kafka/create-topics.sh` has any new topic and its `-dlq`.

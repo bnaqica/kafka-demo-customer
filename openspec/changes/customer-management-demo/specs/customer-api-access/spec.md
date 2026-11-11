@@ -7,10 +7,14 @@ Defines who can call the customer API, in every profile, and how denied requests
 ## ADDED Requirements
 
 ### Requirement: Token required in every profile
-Every endpoint except the health check SHALL require a valid `kafka-demo` realm bearer token in every profile, including `local`. In the `local` profile only, the Swagger pages SHALL be open.
+Every endpoint except the health check SHALL require a valid `kafka-demo` realm bearer token issued for the `kafka-demo-api` audience in every profile, including `local`. In the `local` profile only, the Swagger pages SHALL be open.
 
 #### Scenario: No token
 - **WHEN** a request without a token calls a customer endpoint in any profile
+- **THEN** the API responds 401
+
+#### Scenario: Token for another audience
+- **WHEN** a request calls a customer endpoint with a valid realm token whose audience does not include `kafka-demo-api`
 - **THEN** the API responds 401
 
 #### Scenario: Swagger in local

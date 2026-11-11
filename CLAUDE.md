@@ -1,6 +1,6 @@
 # CLAUDE.md — kafka-demo-customer
 
-Owns customer data in Postgres and publishes a `CUSTOMER_CREATED` event to `customer-events` for every new customer.
+Owns customer data in Postgres and publishes one event to `customer-change-event` for every API call that changes a customer or phone.
 
 One of four repos in the Kafka Demo system (customer, email, analytics, ui). Local infrastructure lives
 in `../../local-docker`. Full picture: `docs/architecture.md`. Event contracts: `docs/kafka-events.md`.
@@ -63,8 +63,8 @@ src/test/resources/
 - Tests mirror the main package. Unit-test services with Mockito; use `@WebMvcTest` for controllers.
 - Database tests run against real PostgreSQL through Testcontainers: `@Import(TestcontainersConfiguration.class)`.
   Don't use an embedded database.
-- Every endpoint needs a JWT, except the health check. Only the `local` profile turns authentication off, so never
-  activate it outside a developer machine.
+- Every endpoint needs a JWT in every profile, except the health check. The `local` profile only opens the Swagger pages.
+- Every change to a customer or phone goes through `CustomerChangeService`, which publishes exactly one event.
 
 ## Workflow
 
